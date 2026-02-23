@@ -1,0 +1,24 @@
+# render.yaml
+
+services:
+  - type: web
+    name: api-notas-personales
+    runtime: python
+    region: oregon  # Misma región que tu base de datos
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: api-notas-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+databases:
+  - name: api-notas-db
+    region: oregon
+    plan: free
+    databaseName: notas_db
+    user: api_notas_user
