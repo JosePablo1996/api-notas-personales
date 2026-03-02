@@ -106,7 +106,7 @@ def init_db():
         Base.metadata.create_all(bind=engine)
         logger.info("✅ Base de datos inicializada correctamente")
         
-        # Verificar conexión - CORREGIDO con text()
+        # Verificar conexión
         with engine.connect() as conn:
             result = conn.execute(text("SELECT 1")).scalar()
             logger.info(f"✅ Conexión a BD verificada: {result}")
@@ -147,12 +147,31 @@ def get_db_stats():
     Útil para monitoreo.
     """
     pool = engine.pool
-    return {
+    
+    # Estadísticas básicas
+    stats = {
         "size": pool.size(),
         "checked_in_connections": pool.checkedin(),
         "overflow": pool.overflow(),
-        "total_connections": pool.total()
     }
+    
+    # Manejar diferentes versiones de SQLAlchemy para el total de conexiones
+    try:
+        # Intentar como método (versiones antiguas)
+        stats["total_connections"] = pool.total()
+    except AttributeError:
+        try:
+            # Intentar como propiedad (versiones nuevas)
+            stats["total_connections"] = pool.total
+        except AttributeError:
+            # Si no funciona, calcular manualmente
+            stats["total_connections"] = pool.size() + pool.overflow()
+            logger.debug("Usando cálculo manual para total_connections")
+        except Exception as e:
+            logger.warning(f"Error al obtener total_connections: {e}")
+            stats["total_connections"] = 0
+    
+    return stats
 
 # Para testing
 def reset_db():
