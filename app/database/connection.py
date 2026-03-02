@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
 from sqlalchemy.exc import SQLAlchemyError
@@ -101,15 +101,14 @@ def init_db():
     """
     try:
         from app.database.base import Base
-        # Importar todos los modelos aquí para asegurar que se registren
         from app.models.note import Note  # Asegúrate de importar tus modelos
         
         Base.metadata.create_all(bind=engine)
         logger.info("✅ Base de datos inicializada correctamente")
         
-        # Verificar conexión
+        # Verificar conexión - CORREGIDO con text()
         with engine.connect() as conn:
-            result = conn.execute("SELECT 1").scalar()
+            result = conn.execute(text("SELECT 1")).scalar()
             logger.info(f"✅ Conexión a BD verificada: {result}")
             
     except SQLAlchemyError as e:
@@ -136,7 +135,7 @@ def check_db_health():
     """
     try:
         with engine.connect() as conn:
-            conn.execute("SELECT 1")
+            conn.execute(text("SELECT 1"))
         return True, "Base de datos saludable"
     except Exception as e:
         logger.error(f"❌ Error en health check de BD: {str(e)}")
